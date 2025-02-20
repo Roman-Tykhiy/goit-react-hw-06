@@ -1,7 +1,12 @@
 import { Field, Form, Formik, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import s from "./ContactForm.module.css";
-const ContactForm = ({ handleSubmit}) => {
+import { useDispatch, useSelector } from "react-redux";
+import { addContact } from "../../redux/contactsSlice";
+const ContactForm = () => {
+    
+    const contacts = useSelector((state) => state.contacts.contacts.items);
+    const dispatch = useDispatch();
     const initialValues = {
         name: "",
         phone: "",
@@ -18,11 +23,33 @@ const ContactForm = ({ handleSubmit}) => {
     phone: Yup.string()
       .matches(phoneValidation, "Невірний формат номера телефону")
       .required("поле обов'язкове"),
-  });
+     });
+    const handleSubmit = (values, actions) => {
+    const isCopy = contacts.some(
+      (contact) =>
+        contact.name.toLowerCase().trim() ===
+          values.name.toLowerCase().trim() && contact.phone === values.phone
+    );
+
+    if (isCopy) {
+      //setErrorMessage("Контакт із таким ім'ям або номером телефону вже існує.");
+      actions.setSubmitting(false);
+      return;
+    }
+    const newConact = {
+      name: values.name,
+      phone: values.phone,
+      id: crypto.randomUUID(),
+        };   
+    dispatch(addContact(newConact));
+    actions.resetForm();
+  };
     
     return (
         <div className={s.container}>
-            <Formik initialValues={initialValues} onSubmit={handleSubmit} validationSchema={applySchema}>
+            <Formik initialValues={initialValues}
+                    onSubmit={handleSubmit}
+                    validationSchema={applySchema}>
                 <Form className={s.form}>
                     <p className={s.text}>Name</p>
                     <Field className={s.field} name="name"
